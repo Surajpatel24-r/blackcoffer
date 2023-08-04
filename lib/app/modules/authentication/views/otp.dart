@@ -107,7 +107,9 @@ class OtpScreen extends StatelessWidget {
                     child: SizedBox(
                       height: 42.h,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          _controller.otpVerificationAndLogin();
+                        },
                         child: Center(
                           child: Text(
                             "Get Started",

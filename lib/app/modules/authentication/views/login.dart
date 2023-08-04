@@ -116,7 +116,7 @@ class AuthScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () {
                           // _controller.onSubmitPhoneNumber();
-                          _controller.userLogin();
+                          _controller.phoneNumberAuthentication();
                         },
                         child: Center(
                           child: Text(

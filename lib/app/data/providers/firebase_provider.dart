@@ -1,6 +1,7 @@
 // ignore_for_file: unused_field, unnecessary_null_comparison
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:blackcoffer/app/data/providers/storage_provider.dart';
 import 'package:blackcoffer/app/modules/authentication/views/otp.dart';
@@ -8,7 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
-// import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../modules/home/views/view.dart';
 import '../models/userModel.dart';
 
 class FirebaseProvider {
@@ -19,39 +21,16 @@ class FirebaseProvider {
 
   Future<void> verifyPhoneNumber(String phoneNumber) async {
     try {
-      // existing code
-      // await _firebaseAuth.verifyPhoneNumber(
-      //   phoneNumber: phoneNumber,
-      //   verificationCompleted: (PhoneAuthCredential credential) async {
-      //     await _firebaseAuth.signInWithCredential(credential);
-      //     Get.offAll(() => HomeScreen());
-      //   },
-      //   verificationFailed: (FirebaseAuthException e) {
-      //     // Handle verification failure
-      //     Get.snackbar("Error", "Verification failed: ${e.message}");
-      //   },
-      //   codeSent: (String verificationId, int? resendToken) {
-      //     // Navigate to OTP screen and pass verificationId to OTP screen
-      //     Get.to(() => OtpScreen(
-      //           verificationId: '$verificationId',
-      //         ));
-      //   },
-      //   codeAutoRetrievalTimeout: (String verificationId) {},
-      //   timeout: const Duration(seconds: 60),
-      // );
       await _firebaseAuth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
           await _firebaseAuth.signInWithCredential(credential);
-          // authentication successful, do something
         },
         verificationFailed: (FirebaseAuthException e) {
-          // authentication failed, do something
           Get.snackbar("Error", "Verification failed: ${e.message}");
           print("Verification failed: ${e.message}");
         },
         codeSent: (String verificationId, int? resendToken) async {
-          // code sent to phone number, save verificationId for later use
           String smsCode = ''; // get sms code from user
           PhoneAuthCredential credential = PhoneAuthProvider.credential(
             verificationId: verificationId,
@@ -59,7 +38,6 @@ class FirebaseProvider {
           );
           Get.to(OtpScreen(), arguments: [verificationId]);
           await _firebaseAuth.signInWithCredential(credential);
-          // authentication successful, do something
         },
         codeAutoRetrievalTimeout: (String verificationId) {},
       );
@@ -68,44 +46,48 @@ class FirebaseProvider {
     }
   }
 
-  // Future<void> signInWithOTP(String verificationId, String smsCode) async {
-  //   try {
-  //     final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-  //       verificationId: verificationId,
-  //       smsCode: smsCode,
-  //     );
-  //     await _firebaseAuth.signInWithCredential(credential);
-  //     Get.offAll(() => HomeScreen());
-  //   } catch (e) {
-  //     Get.snackbar("Error", "Invalid OTP");
-  //   }
-  // }
+// verify otp
+  Future<void> verifyOtp(String verificationId, String userOtp) async {
+    try {
+      PhoneAuthCredential creds = PhoneAuthProvider.credential(
+          verificationId: verificationId, smsCode: userOtp);
+      User? user = (await _firebaseAuth.signInWithCredential(creds)).user;
+      if (user != null) {
+        Get.to(HomeScreen());
+      } else {
+        Get.snackbar(
+          "Authentication failed",
+          "Failed",
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      Get.snackbar(
+        e.message.toString(),
+        "Failed",
+      );
+    }
+  }
 
-  // Future<void> signInWithPhoneNumber(String phoneNumber) async {
-  //   await _firebaseAuth.verifyPhoneNumber(
-  //     phoneNumber: phoneNumber,
-  //     verificationCompleted: (PhoneAuthCredential credential) async {
-  //       await _firebaseAuth.signInWithCredential(credential);
-  //       // authentication successful, do something
-  //     },
-  //     verificationFailed: (FirebaseAuthException e) {
-  //       // authentication failed, do something
-  //       Get.snackbar("Error", "Verification failed: ${e.message}");
-  //     },
-  //     codeSent: (String verificationId, int? resendToken) async {
-  //       // code sent to phone number, save verificationId for later use
-  //       String smsCode = ''; // get sms code from user
-  //       PhoneAuthCredential credential = PhoneAuthProvider.credential(
-  //         verificationId: verificationId,
-  //         smsCode: smsCode,
-  //       );
-  //       Get.to(OtpScreen(), arguments: [verificationId]);
-  //       await _firebaseAuth.signInWithCredential(credential);
-  //       // authentication successful, do something
-  //     },
-  //     codeAutoRetrievalTimeout: (String verificationId) {},
-  //   );
-  // }
+  Future<String?> uploadImageToFirebase(uid, XFile videoFile) async {
+    try {
+      final ref =
+          FirebaseStorage.instance.ref().child('Recorded_videos').child(uid);
+
+      // final existingVideoExists =
+      //     await ref.getDownloadURL().then((_) => true).catchError((_) => false);
+
+      // print(existingVideoExists);
+      final uploadVideo = ref.putFile(File(videoFile.path));
+
+      final taskSnapshot = await uploadVideo.whenComplete(() => null);
+      final videoUrl = await taskSnapshot.ref.getDownloadURL();
+
+      return videoUrl;
+    } catch (e) {
+      print('Error uploading/updating image: $e');
+      return null;
+    }
+  }
 
   // signOut the Account
   Future<bool> signOut() async {

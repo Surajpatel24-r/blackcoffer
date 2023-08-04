@@ -1,10 +1,14 @@
+// ignore_for_file: unnecessary_null_comparison, unused_field
+
 import 'package:country_picker/country_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/providers/firebase_provider.dart';
 
 class AuthScreenController extends GetxController {
   final FirebaseProvider _firebaseProvider = FirebaseProvider();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   final loginFormKey = GlobalKey<FormState>();
   final otpFormKey = GlobalKey<FormState>();
@@ -36,26 +40,12 @@ class AuthScreenController extends GetxController {
     selectedCountry.value = country;
   }
 
-  String? _verificationId;
-  String? get verificationId => _verificationId;
-
-  void setVerificationId(String? id) {
-    _verificationId = id;
-    update();
-  }
-
-  // void onSubmitPhoneNumber() {
-  //   String phoneNumber = numberEditingController.text;
-  //   _firebaseProvider.signInWithPhoneNumber(phoneNumber);
-  // }
-
-  void userLogin() async {
+  void phoneNumberAuthentication() async {
     String mobile = numberEditingController.text;
     if (mobile == "") {
       Get.snackbar(
         "Please enter the mobile number!",
         "Failed",
-        colorText: Colors.white,
       );
     } else {
       _firebaseProvider
@@ -63,14 +53,23 @@ class AuthScreenController extends GetxController {
     }
   }
 
+  void otpVerificationAndLogin() {
+    String? otpCode = otpEditingController.text;
+    final String verificationId = Get.arguments[0];
+    if (otpCode != null) {
+      _firebaseProvider.verifyOtp(verificationId, otpCode);
+    } else {
+      Get.snackbar(
+        "Enter 6-Digit code",
+        "Failed",
+      );
+    }
+  }
+
   @override
   void dispose() {
     numberEditingController.dispose();
+    otpEditingController.dispose();
     super.dispose();
   }
-
-  // void onSubmitOTP() {
-  //   _firebaseProvider.signInWithOTP(
-  //       _verificationId.toString(), otpEditingController.text);
-  // }
 }
