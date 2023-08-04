@@ -330,19 +330,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 Padding(
                   padding:
                       EdgeInsets.symmetric(horizontal: 28.w, vertical: 21.h),
-                  child: SizedBox(
-                    height: 42.h,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _controller.selectVideoFromCamera();
-                      },
-                      child: Center(
-                        child: Text("Add Video"),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorConstant.indigo,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(11),
+                  child: InkWell(
+                    onDoubleTap: () {
+                      _controller.saveProfile();
+                    },
+                    child: SizedBox(
+                      height: 42.h,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _controller.selectVideoFromCamera();
+                        },
+                        child: Center(
+                          child: Text("Add Video"),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorConstant.indigo,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11),
+                          ),
                         ),
                       ),
                     ),

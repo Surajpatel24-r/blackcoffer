@@ -9,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../core/values/keys.dart';
 import '../../modules/home/views/view.dart';
 import '../models/userModel.dart';
 
@@ -19,6 +19,7 @@ class FirebaseProvider {
   final StorageProvider _storageProvider = StorageProvider();
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
 
+  // Phone Number Authentication
   Future<void> verifyPhoneNumber(String phoneNumber) async {
     try {
       await _firebaseAuth.verifyPhoneNumber(
@@ -53,6 +54,15 @@ class FirebaseProvider {
           verificationId: verificationId, smsCode: userOtp);
       User? user = (await _firebaseAuth.signInWithCredential(creds)).user;
       if (user != null) {
+        UserModel userModel = UserModel(
+          uid: user.uid,
+          displayName: user.displayName ?? '', // Add other user details here
+          phoneNumber: user.phoneNumber ?? '', // Add other user details here
+          // Add other user details here
+        );
+
+        // Save the user data to Firestore
+        await uploadUserData(userModel);
         Get.to(HomeScreen());
       } else {
         Get.snackbar(
@@ -68,23 +78,48 @@ class FirebaseProvider {
     }
   }
 
-  Future<String?> uploadImageToFirebase(uid, XFile videoFile) async {
+  Future<void> uploadUserData(UserModel userModel) async {
     try {
-      final ref =
-          FirebaseStorage.instance.ref().child('Recorded_videos').child(uid);
-
-      // final existingVideoExists =
-      //     await ref.getDownloadURL().then((_) => true).catchError((_) => false);
-
-      // print(existingVideoExists);
-      final uploadVideo = ref.putFile(File(videoFile.path));
-
-      final taskSnapshot = await uploadVideo.whenComplete(() => null);
-      final videoUrl = await taskSnapshot.ref.getDownloadURL();
-
-      return videoUrl;
+      final CollectionReference usersCollection =
+          _firestore.collection('users');
+      await usersCollection.doc(userModel.uid).set(userModel.toJson());
     } catch (e) {
-      print('Error uploading/updating image: $e');
+      print('Error saving user data to Firestore: $e');
+      throw e;
+    }
+  }
+
+  Future<bool> uploadRecordedVideos(UserModel updatedUser) async {
+    var check = true;
+    UserModel user = await _storageProvider.readUserModel();
+    try {
+      CollectionReference userCollection =
+          _firestore.collection(KeysConstant.users);
+      DocumentReference doc = userCollection.doc(user.uid);
+      await doc.update(updatedUser.toJson()).timeout(Duration(seconds: 5),
+          onTimeout: () {
+        check = false;
+      });
+      await _storageProvider.writeUserModel(updatedUser);
+      return check;
+    } catch (e) {
+      print(e.toString());
+      Get.snackbar("Error", e.toString());
+      return false;
+    }
+  }
+
+  // Function to upload video to Firebase Storage and get the download URL
+  Future<String?> uploadVideoToFirebase(uid, File videoFile) async {
+    try {
+      final Reference ref =
+          _firebaseStorage.ref().child('videos').child('$uid.mp4');
+      final TaskSnapshot snapshot = await ref.putFile(videoFile);
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      // Handle any errors during video upload
+      print('Error uploading video: $e');
       return null;
     }
   }

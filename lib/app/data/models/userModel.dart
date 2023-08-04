@@ -1,3 +1,7 @@
+// To parse this JSON data, do
+//
+//     final userModel = userModelFromJson(jsonString);
+
 import 'dart:convert';
 
 UserModel userModelFromJson(String str) => UserModel.fromJson(json.decode(str));
@@ -13,6 +17,10 @@ class UserModel {
   String? videoDescription;
   String? videoCategory;
   String? videoUrl;
+  String? city;
+  String? state;
+  String? zipCode;
+  String? street;
   List<double>? location;
 
   UserModel({
@@ -24,6 +32,10 @@ class UserModel {
     this.videoDescription,
     this.videoCategory,
     this.videoUrl,
+    this.city,
+    this.state,
+    this.zipCode,
+    this.street,
     this.location,
   });
 
@@ -36,6 +48,10 @@ class UserModel {
     String? videoDescription,
     String? videoCategory,
     String? videoUrl,
+    String? city,
+    String? state,
+    String? zipCode,
+    String? street,
     List<double>? location,
   }) =>
       UserModel(
@@ -47,6 +63,10 @@ class UserModel {
         videoDescription: videoDescription ?? this.videoDescription,
         videoCategory: videoCategory ?? this.videoCategory,
         videoUrl: videoUrl ?? this.videoUrl,
+        city: city ?? this.city,
+        state: state ?? this.state,
+        zipCode: zipCode ?? this.zipCode,
+        street: street ?? this.street,
         location: location ?? this.location,
       );
 
@@ -59,6 +79,10 @@ class UserModel {
         videoDescription: json["videoDescription"],
         videoCategory: json["videoCategory"],
         videoUrl: json["videoUrl"],
+        city: json["city"],
+        state: json["state"],
+        zipCode: json["zipCode"],
+        street: json["street"],
         location: json["Location"] == null
             ? []
             : List<double>.from(json["Location"]!.map((x) => x?.toDouble())),
@@ -73,6 +97,10 @@ class UserModel {
         "videoDescription": videoDescription,
         "videoCategory": videoCategory,
         "videoUrl": videoUrl,
+        "city": city,
+        "state": state,
+        "zipCode": zipCode,
+        "street": street,
         "Location":
             location == null ? [] : List<dynamic>.from(location!.map((x) => x)),
       };

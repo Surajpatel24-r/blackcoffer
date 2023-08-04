@@ -8,59 +8,80 @@ import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
+import '../../data/models/userModel.dart';
+import '../../data/providers/firebase_provider.dart';
+import '../../data/providers/storage_provider.dart';
+
 class HomeScreenController extends GetxController {
-  // late TextEditingController cityController;
-  // late TextEditingController stateController;
-  // late TextEditingController zipCodeController;
-  // late TextEditingController streetController;
+  final _storageProvider = StorageProvider();
+  final _firebaseProvider = FirebaseProvider();
+  UserModel? user;
 
-  final TextEditingController videoTitleController = TextEditingController();
-  final TextEditingController videoDescriptionController =
-      TextEditingController();
-  final TextEditingController videoCategoryController = TextEditingController();
-  final TextEditingController cityController = TextEditingController();
-  final TextEditingController stateController = TextEditingController();
-  final TextEditingController zipCodeController = TextEditingController();
-  final TextEditingController streetController = TextEditingController();
+  TextEditingController cityController = TextEditingController();
+  TextEditingController stateController = TextEditingController();
+  TextEditingController zipCodeController = TextEditingController();
+  TextEditingController streetController = TextEditingController();
+  TextEditingController videoTitleController = TextEditingController();
+  TextEditingController videoDescriptionController = TextEditingController();
+  TextEditingController videoCategoryController = TextEditingController();
 
-  // @override
-  // void onInit() async {
-  //   super.onInit();
-  // }
+  // final TextEditingController videoTitleController = TextEditingController();
+  // final TextEditingController videoDescriptionController =
+  //     TextEditingController();
+  // final TextEditingController videoCategoryController = TextEditingController();
+  // final TextEditingController cityController = TextEditingController();
+  // final TextEditingController stateController = TextEditingController();
+  // final TextEditingController zipCodeController = TextEditingController();
+  // final TextEditingController streetController = TextEditingController();
 
-  // @override
-  // void onClose() {
-  //   // TODO: implement onClose
-  //   super.onClose();
-  // }
+  @override
+  void onInit() async {
+    super.onInit();
+  }
 
-  // var isLoading = false.obs;
-  // void setIsLoading(value) {
-  //   isLoading.value = value;
-  // }
+  @override
+  void onClose() {
+    // TODO: implement onClose
+    super.onClose();
+  }
 
-  // var isLocationLoading = false.obs;
-  // void setIsLocationLoading(value) {
-  //   isLocationLoading.value = value;
-  // }
+  var isLoading = false.obs;
+  void setIsLoading(value) {
+    isLoading.value = value;
+  }
 
-  // void initTextEditingController() {
-  //   cityController = TextEditingController();
-  //   stateController = TextEditingController();
-  //   zipCodeController = TextEditingController();
-  //   streetController = TextEditingController();
-  //   // cityController.text = user!.city ?? '';
-  //   // stateController.text = user!.state ?? '';
-  //   // zipCodeController.text = user!.zipCode ?? '';
-  //   // streetController.text = user!.street ?? '';
-  // }
+  var isLocationLoading = false.obs;
+  void setIsLocationLoading(value) {
+    isLocationLoading.value = value;
+  }
 
-  // void disposeTextEditingController() {
-  //   cityController.dispose();
-  //   stateController.dispose();
-  //   zipCodeController.dispose();
-  //   streetController.dispose();
-  // }
+  void initTextEditingController() {
+    videoTitleController = TextEditingController();
+    videoDescriptionController = TextEditingController();
+    videoCategoryController = TextEditingController();
+    cityController = TextEditingController();
+    stateController = TextEditingController();
+    zipCodeController = TextEditingController();
+    streetController = TextEditingController();
+
+    videoTitleController.text = user!.videoTitle ?? '';
+    videoDescriptionController.text = user!.videoDescription ?? '';
+    videoCategoryController.text = user!.videoCategory ?? '';
+    cityController.text = user!.city ?? '';
+    stateController.text = user!.state ?? '';
+    zipCodeController.text = user!.zipCode ?? '';
+    streetController.text = user!.street ?? '';
+  }
+
+  void disposeTextEditingController() {
+    videoTitleController.dispose();
+    videoDescriptionController.dispose();
+    videoCategoryController.dispose();
+    cityController.dispose();
+    stateController.dispose();
+    zipCodeController.dispose();
+    streetController.dispose();
+  }
 
   // Video Section
   Rx<File?> selectedVideo = Rx<File?>(null);
@@ -164,6 +185,60 @@ class HomeScreenController extends GetxController {
       return DateFormat('dd-MMM-yyyy').format(date);
     }
     return '';
+  }
+
+  void saveProfile() async {
+    print(videoTitleController.text);
+    print(videoDescriptionController.text);
+    print(videoCategoryController.text);
+    print(cityController.text);
+
+    // setIsLoading(true);
+    // if (selectedVideoFile != null) {
+    //   final videoUrl = await _firebaseProvider.uploadVideoToFirebase(
+    //       user!.uid, selectedVideoFile!);
+
+    //   user = user!.copyWith(
+    //     videoUrl: videoUrl,
+    //   );
+    // }
+
+    user = user!.copyWith(
+      videoTitle: videoTitleController.text.isEmpty
+          ? null
+          : videoTitleController.text.trim(),
+      videoDescription: videoDescriptionController.text.isEmpty
+          ? null
+          : videoDescriptionController.text.trim(),
+      videoCategory: videoCategoryController.text.isEmpty
+          ? null
+          : videoCategoryController.text.trim(),
+      city: cityController.text.isEmpty ? null : cityController.text.trim(),
+      street:
+          streetController.text.isEmpty ? null : streetController.text.trim(),
+      state: stateController.text.isEmpty ? null : stateController.text.trim(),
+      zipCode:
+          zipCodeController.text.isEmpty ? null : zipCodeController.text.trim(),
+      // videoUrl: ,
+    );
+
+    final success = await _firebaseProvider.uploadRecordedVideos(user!);
+
+    if (success) {
+      user = await _storageProvider.readUserModel();
+      Get.snackbar(
+          'Profile Update Successfully', "Profile Update Successfully");
+      // setIsLoading(false);
+      await Future.delayed(
+        Duration(seconds: 1),
+        () {
+          Get.back();
+        },
+      );
+      // disposeTextEditingController();
+    } else {
+      // setIsLoading(false);
+    }
   }
 
   // void fetchLocation() async {
