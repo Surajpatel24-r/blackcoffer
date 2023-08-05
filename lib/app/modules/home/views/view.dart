@@ -202,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   InkWell(
                     onTap: () {
-                      // _controller.fetchLocation();
+                      _controller.fetchLocation();
                     },
                     child: Column(
                       children: [

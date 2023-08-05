@@ -12,6 +12,7 @@ import 'package:get/get.dart';
 import '../../core/values/keys.dart';
 import '../../modules/home/views/view.dart';
 import '../models/userModel.dart';
+import '../models/videoModel.dart';
 
 class FirebaseProvider {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -56,13 +57,13 @@ class FirebaseProvider {
       if (user != null) {
         UserModel userModel = UserModel(
           uid: user.uid,
-          displayName: user.displayName ?? '', // Add other user details here
           phoneNumber: user.phoneNumber ?? '', // Add other user details here
           // Add other user details here
         );
 
         // Save the user data to Firestore
         await uploadUserData(userModel);
+        await _storageProvider.writeUserModel(userModel);
         Get.to(HomeScreen());
       } else {
         Get.snackbar(
@@ -89,18 +90,28 @@ class FirebaseProvider {
     }
   }
 
-  Future<bool> uploadRecordedVideos(UserModel updatedUser) async {
+  Future<bool> createVideo(VideoModel updatedUser) async {
     var check = true;
-    UserModel user = await _storageProvider.readUserModel();
+    // UserModel user = await _storageProvider.readUserModel();
     try {
-      CollectionReference userCollection =
-          _firestore.collection(KeysConstant.users);
-      DocumentReference doc = userCollection.doc(user.uid);
-      await doc.update(updatedUser.toJson()).timeout(Duration(seconds: 5),
-          onTimeout: () {
+      CollectionReference videosCollection =
+          _firestore.collection(KeysConstant.videos);
+      // for unique videos collection setup
+      final alldocs = await videosCollection.get();
+      print(alldocs.docs.length);
+      var len = 0;
+      if (alldocs.docs.length != 0) {
+        final last = alldocs.docs.last;
+        len = int.parse((last.data() as Map<String, dynamic>)['docId']) + 1;
+        print(len);
+      }
+      DocumentReference doc = videosCollection.doc(len.toString());
+      // updatedUser.copyWith(docId: len.toString());
+      await doc
+          .set(updatedUser.copyWith(docId: len.toString()).toJson())
+          .timeout(Duration(seconds: 5), onTimeout: () {
         check = false;
       });
-      await _storageProvider.writeUserModel(updatedUser);
       return check;
     } catch (e) {
       print(e.toString());
@@ -109,18 +120,33 @@ class FirebaseProvider {
     }
   }
 
-  // Function to upload video to Firebase Storage and get the download URL
-  Future<String?> uploadVideoToFirebase(uid, File videoFile) async {
+  Future<String> uploadVideoToFirebase(uid, File videoFile) async {
     try {
-      final Reference ref =
-          _firebaseStorage.ref().child('videos').child('$uid.mp4');
-      final TaskSnapshot snapshot = await ref.putFile(videoFile);
-      final String downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+      final ref = await _firebaseStorage
+          .ref()
+          .child('RecordedVideos/$uid/${videoFile.path.split('/').last}')
+          .putFile(videoFile);
+      final url = await ref.ref.getDownloadURL();
+      return url;
     } catch (e) {
-      // Handle any errors during video upload
-      print('Error uploading video: $e');
-      return null;
+      Get.snackbar("Error", e.toString());
+      return 'null';
+    }
+  }
+
+  Future<String> uploadVideoThumbnailToFirebase(
+      uid, File videoFileThumbnail) async {
+    try {
+      final ref = await _firebaseStorage
+          .ref()
+          .child(
+              'RecordedVideosThumbnail/$uid/${videoFileThumbnail.path.split('/').last}')
+          .putFile(videoFileThumbnail);
+      final url = await ref.ref.getDownloadURL();
+      return url;
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+      return 'null';
     }
   }
 

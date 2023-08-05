@@ -1,7 +1,7 @@
 class KeysConstant {
   // To save Variables
   static const user = 'user';
-  static const displayName = 'name';
+  static const videos = 'video';
 
   // Collections Keys
   static const users = 'users';

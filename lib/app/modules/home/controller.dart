@@ -1,14 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../../data/models/userModel.dart';
+import '../../data/models/videoModel.dart';
 import '../../data/providers/firebase_provider.dart';
 import '../../data/providers/storage_provider.dart';
 
@@ -16,6 +20,7 @@ class HomeScreenController extends GetxController {
   final _storageProvider = StorageProvider();
   final _firebaseProvider = FirebaseProvider();
   UserModel? user;
+  VideoModel? videosModel;
 
   TextEditingController cityController = TextEditingController();
   TextEditingController stateController = TextEditingController();
@@ -24,15 +29,6 @@ class HomeScreenController extends GetxController {
   TextEditingController videoTitleController = TextEditingController();
   TextEditingController videoDescriptionController = TextEditingController();
   TextEditingController videoCategoryController = TextEditingController();
-
-  // final TextEditingController videoTitleController = TextEditingController();
-  // final TextEditingController videoDescriptionController =
-  //     TextEditingController();
-  // final TextEditingController videoCategoryController = TextEditingController();
-  // final TextEditingController cityController = TextEditingController();
-  // final TextEditingController stateController = TextEditingController();
-  // final TextEditingController zipCodeController = TextEditingController();
-  // final TextEditingController streetController = TextEditingController();
 
   @override
   void onInit() async {
@@ -64,13 +60,13 @@ class HomeScreenController extends GetxController {
     zipCodeController = TextEditingController();
     streetController = TextEditingController();
 
-    videoTitleController.text = user!.videoTitle ?? '';
-    videoDescriptionController.text = user!.videoDescription ?? '';
-    videoCategoryController.text = user!.videoCategory ?? '';
-    cityController.text = user!.city ?? '';
-    stateController.text = user!.state ?? '';
-    zipCodeController.text = user!.zipCode ?? '';
-    streetController.text = user!.street ?? '';
+    videoTitleController.text = videosModel!.videoTitle ?? '';
+    videoDescriptionController.text = videosModel!.videoDescription ?? '';
+    videoCategoryController.text = videosModel!.videoCategory ?? '';
+    cityController.text = videosModel!.city ?? '';
+    stateController.text = videosModel!.state ?? '';
+    zipCodeController.text = videosModel!.zipCode ?? '';
+    streetController.text = videosModel!.street ?? '';
   }
 
   void disposeTextEditingController() {
@@ -203,7 +199,13 @@ class HomeScreenController extends GetxController {
     //   );
     // }
 
-    user = user!.copyWith(
+    user = await _storageProvider.readUserModel();
+
+    final videoUrl = await _firebaseProvider.uploadVideoToFirebase(
+        user!.uid, selectedVideoFile!);
+    final videoThumbnailUrl = await _firebaseProvider
+        .uploadVideoThumbnailToFirebase(user!.uid, File(uploadVideoThumbnail!));
+    final success = await _firebaseProvider.createVideo(VideoModel(
       videoTitle: videoTitleController.text.isEmpty
           ? null
           : videoTitleController.text.trim(),
@@ -213,21 +215,19 @@ class HomeScreenController extends GetxController {
       videoCategory: videoCategoryController.text.isEmpty
           ? null
           : videoCategoryController.text.trim(),
+      createdBy: user!.uid,
       city: cityController.text.isEmpty ? null : cityController.text.trim(),
       street:
           streetController.text.isEmpty ? null : streetController.text.trim(),
       state: stateController.text.isEmpty ? null : stateController.text.trim(),
       zipCode:
           zipCodeController.text.isEmpty ? null : zipCodeController.text.trim(),
-      // videoUrl: ,
-    );
-
-    final success = await _firebaseProvider.uploadRecordedVideos(user!);
+      videoThumbnail: videoThumbnailUrl,
+      videoUrl: videoUrl,
+    ));
 
     if (success) {
-      user = await _storageProvider.readUserModel();
-      Get.snackbar(
-          'Profile Update Successfully', "Profile Update Successfully");
+      Get.snackbar('Video Upload Successfully', "Video Upload Successfully");
       // setIsLoading(false);
       await Future.delayed(
         Duration(seconds: 1),
@@ -241,38 +241,38 @@ class HomeScreenController extends GetxController {
     }
   }
 
-  // void fetchLocation() async {
-  //   setIsLocationLoading(true);
-  //   final latLogList = await _getCurrentLocation();
-  //   if (latLogList.isNotEmpty) {
-  //     // List<Placemark> placemarks =
-  //     //     await placemarkFromCoordinates(latLogList[0], latLogList[1]);
-  //     // streetController.text = placemarks[2].street!;
-  //     // cityController.text = placemarks[0].locality!;
-  //     // zipCodeController.text = placemarks[0].postalCode!;
-  //     // stateController.text = placemarks[0].administrativeArea!;
-  //     setIsLocationLoading(false);
-  //   } else {
-  //     setIsLocationLoading(false);
-  //   }
-  // }
+  void fetchLocation() async {
+    setIsLocationLoading(true);
+    final latLogList = await _getCurrentLocation();
+    if (latLogList.isNotEmpty) {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(latLogList[0], latLogList[1]);
+      streetController.text = placemarks[2].street!;
+      cityController.text = placemarks[0].locality!;
+      zipCodeController.text = placemarks[0].postalCode!;
+      stateController.text = placemarks[0].administrativeArea!;
+      setIsLocationLoading(false);
+    } else {
+      setIsLocationLoading(false);
+    }
+  }
 
-  // Future<List<double>> _getCurrentLocation() async {
-  //   List<double> tempList = [];
-  //   try {
-  //     PermissionStatus permissionStatus = await Permission.location.request();
-  //     if (permissionStatus.isGranted) {
-  //       Position position = await Geolocator.getCurrentPosition(
-  //         desiredAccuracy: LocationAccuracy.high,
-  //       );
-  //       tempList.assignAll([position.latitude, position.longitude]);
-  //       return tempList;
-  //     } else {
-  //       return [];
-  //     }
-  //   } catch (e) {
-  //     printInfo(info: e.toString());
-  //     return [];
-  //   }
-  // }
+  Future<List<double>> _getCurrentLocation() async {
+    List<double> tempList = [];
+    try {
+      PermissionStatus permissionStatus = await Permission.location.request();
+      if (permissionStatus.isGranted) {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        tempList.assignAll([position.latitude, position.longitude]);
+        return tempList;
+      } else {
+        return [];
+      }
+    } catch (e) {
+      printInfo(info: e.toString());
+      return [];
+    }
+  }
 }

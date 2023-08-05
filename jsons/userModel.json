@@ -1,15 +1,4 @@
 {
     "uid": "",
-    "displayName": "",
-    "phoneNumber": "",
-    "phoneVerified": true,
-    "videoTitle": "",
-    "videoDescription": "",
-    "videoCategory": "",
-    "videoUrl": "",
-    "city": "",
-    "state": "",
-    "zipCode": "",
-    "street": "",
-    "Location": [900983.90, 90383.9003]
+    "phoneNumber": ""
 }
