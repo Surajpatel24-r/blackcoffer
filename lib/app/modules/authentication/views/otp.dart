@@ -89,7 +89,7 @@ class OtpScreen extends StatelessWidget {
                     ),
                     InkWell(
                       onTap: () {
-                        // _controller.setLoginState(true);
+                        _controller.phoneNumberAuthentication();
                       },
                       child: Text(
                         "resend?",

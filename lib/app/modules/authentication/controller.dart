@@ -10,8 +10,8 @@ class AuthScreenController extends GetxController {
   final FirebaseProvider _firebaseProvider = FirebaseProvider();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-  final loginFormKey = GlobalKey<FormState>();
-  final otpFormKey = GlobalKey<FormState>();
+  // final loginFormKey = GlobalKey<FormState>();
+  // final otpFormKey = GlobalKey<FormState>();
 
   //mobile auth
   final numberEditingController = TextEditingController();
@@ -42,6 +42,7 @@ class AuthScreenController extends GetxController {
 
   void phoneNumberAuthentication() async {
     String mobile = numberEditingController.text;
+    setLoading(true);
     if (mobile == "") {
       Get.snackbar(
         "Please enter the mobile number!",
@@ -50,20 +51,26 @@ class AuthScreenController extends GetxController {
     } else {
       _firebaseProvider
           .verifyPhoneNumber("+${selectedCountry.value.phoneCode}$mobile");
+      setLoading(false);
     }
+    setLoading(false);
   }
 
   void otpVerificationAndLogin() {
     String? otpCode = otpEditingController.text;
     final String verificationId = Get.arguments[0];
+    setLoading(true);
     if (otpCode != null) {
       _firebaseProvider.verifyOtp(verificationId, otpCode);
+      setLoading(false);
     } else {
       Get.snackbar(
         "Enter 6-Digit code",
         "Failed",
       );
+      setLoading(false);
     }
+    setLoading(false);
   }
 
   @override

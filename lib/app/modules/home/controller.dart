@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:blackcoffer/app/routes/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,7 +10,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-
 import '../../data/models/userModel.dart';
 import '../../data/models/videoModel.dart';
 import '../../data/providers/firebase_provider.dart';
@@ -29,6 +28,7 @@ class HomeScreenController extends GetxController {
   TextEditingController videoTitleController = TextEditingController();
   TextEditingController videoDescriptionController = TextEditingController();
   TextEditingController videoCategoryController = TextEditingController();
+  TextEditingController searchController = TextEditingController();
 
   @override
   void onInit() async {
@@ -59,6 +59,7 @@ class HomeScreenController extends GetxController {
     stateController = TextEditingController();
     zipCodeController = TextEditingController();
     streetController = TextEditingController();
+    searchController = TextEditingController();
 
     videoTitleController.text = videosModel!.videoTitle ?? '';
     videoDescriptionController.text = videosModel!.videoDescription ?? '';
@@ -189,15 +190,7 @@ class HomeScreenController extends GetxController {
     print(videoCategoryController.text);
     print(cityController.text);
 
-    // setIsLoading(true);
-    // if (selectedVideoFile != null) {
-    //   final videoUrl = await _firebaseProvider.uploadVideoToFirebase(
-    //       user!.uid, selectedVideoFile!);
-
-    //   user = user!.copyWith(
-    //     videoUrl: videoUrl,
-    //   );
-    // }
+    setIsLoading(true);
 
     user = await _storageProvider.readUserModel();
 
@@ -228,16 +221,16 @@ class HomeScreenController extends GetxController {
 
     if (success) {
       Get.snackbar('Video Upload Successfully', "Video Upload Successfully");
-      // setIsLoading(false);
+      setIsLoading(false);
       await Future.delayed(
         Duration(seconds: 1),
         () {
           Get.back();
         },
       );
-      // disposeTextEditingController();
+      disposeTextEditingController();
     } else {
-      // setIsLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -273,6 +266,21 @@ class HomeScreenController extends GetxController {
     } catch (e) {
       printInfo(info: e.toString());
       return [];
+    }
+  }
+
+  //=================== Video Listing ====================================
+  Stream<List<VideoModel>> getVideoStream() {
+    return _firebaseProvider.getVideoStream();
+  }
+
+  void logOut() async {
+    var logoutBool = await _firebaseProvider.signOut();
+    if (logoutBool == true) {
+      Get.offAll(() => AppRoute.login);
+      Get.snackbar("LogOut Success", "Successfully logout");
+    } else {
+      Get.snackbar("LogOut Failed!", "Failed to log out !");
     }
   }
 }

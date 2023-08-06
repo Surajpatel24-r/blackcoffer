@@ -115,18 +115,22 @@ class AuthScreen extends StatelessWidget {
                       height: 42.h,
                       child: ElevatedButton(
                         onPressed: () {
-                          // _controller.onSubmitPhoneNumber();
                           _controller.phoneNumberAuthentication();
                         },
                         child: Center(
-                          child: Text(
-                            "Next",
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge!
-                                .copyWith(color: ColorConstant.white),
-                          ),
-                        ),
+                            child: _controller.setLoading != true
+                                ? Text(
+                                    "Next",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge!
+                                        .copyWith(color: ColorConstant.white),
+                                  )
+                                : Center(
+                                    child: CircularProgressIndicator(
+                                      color: ColorConstant.pink,
+                                    ),
+                                  )),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorConstant.indigo,
                           shape: RoundedRectangleBorder(

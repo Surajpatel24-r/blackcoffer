@@ -8,16 +8,16 @@ import 'package:get/get.dart';
 import '../../../core/values/colors.dart';
 import '../../../widgets/text_feild.dart';
 
-class HomeScreen extends StatefulWidget {
-  HomeScreen({super.key});
+class VideoPostScreen extends StatefulWidget {
+  VideoPostScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<VideoPostScreen> createState() => _VideoPostScreenState();
 }
 
 final _controller = Get.put(HomeScreenController());
 
-class _HomeScreenState extends State<HomeScreen> {
+class _VideoPostScreenState extends State<VideoPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: AppTextField(
                 label: "Enter Video title",
+                maxLines: 1,
                 controller: _controller.videoTitleController,
               ),
             ),
@@ -188,6 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: AppTextField(
                 label: "Enter category",
+                maxLines: 1,
                 controller: _controller.videoCategoryController,
               ),
             ),

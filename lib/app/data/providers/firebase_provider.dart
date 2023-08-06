@@ -5,12 +5,12 @@ import 'dart:io';
 
 import 'package:blackcoffer/app/data/providers/storage_provider.dart';
 import 'package:blackcoffer/app/modules/authentication/views/otp.dart';
+import 'package:blackcoffer/app/modules/base/view.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import '../../core/values/keys.dart';
-import '../../modules/home/views/view.dart';
 import '../models/userModel.dart';
 import '../models/videoModel.dart';
 
@@ -64,7 +64,7 @@ class FirebaseProvider {
         // Save the user data to Firestore
         await uploadUserData(userModel);
         await _storageProvider.writeUserModel(userModel);
-        Get.to(HomeScreen());
+        Get.off(() => AppBase());
       } else {
         Get.snackbar(
           "Authentication failed",
@@ -79,6 +79,7 @@ class FirebaseProvider {
     }
   }
 
+  // user data show
   Future<void> uploadUserData(UserModel userModel) async {
     try {
       final CollectionReference usersCollection =
@@ -90,6 +91,7 @@ class FirebaseProvider {
     }
   }
 
+  // video upload to firebase
   Future<bool> createVideo(VideoModel updatedUser) async {
     var check = true;
     // UserModel user = await _storageProvider.readUserModel();
@@ -120,6 +122,7 @@ class FirebaseProvider {
     }
   }
 
+  // Video upload to firebase
   Future<String> uploadVideoToFirebase(uid, File videoFile) async {
     try {
       final ref = await _firebaseStorage
@@ -134,6 +137,7 @@ class FirebaseProvider {
     }
   }
 
+  // Video thumbnail upload to firebase
   Future<String> uploadVideoThumbnailToFirebase(
       uid, File videoFileThumbnail) async {
     try {
@@ -148,6 +152,19 @@ class FirebaseProvider {
       Get.snackbar("Error", e.toString());
       return 'null';
     }
+  }
+
+  // Get all the video and datas
+  Stream<List<VideoModel>> getVideoStream() {
+    final CollectionReference videosCollection =
+        FirebaseFirestore.instance.collection('video');
+    return videosCollection.snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => VideoModel.fromJson(doc.data() as Map<String, dynamic>))
+          .toList()
+          .reversed
+          .toList();
+    });
   }
 
   // signOut the Account

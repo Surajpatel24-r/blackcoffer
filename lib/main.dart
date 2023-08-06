@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-
-import 'app/modules/home/views/view.dart';
+import 'app/modules/home/views/videoPlay.dart';
+import 'app/modules/home/views/videoPost.dart';
+import 'app/modules/home/views/videoView.dart';
 import 'app/routes/pages.dart';
 
 void main() async {
@@ -32,7 +33,7 @@ class MainApp extends StatelessWidget {
           title: 'BlackCoffer',
           initialRoute: '/',
           getPages: GetPages.pages,
-          // home: HomeScreen(),
+          // home: VideoViewListScreen(),
         );
       },
     );
