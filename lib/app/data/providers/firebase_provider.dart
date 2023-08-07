@@ -154,17 +154,33 @@ class FirebaseProvider {
     }
   }
 
-  // Get all the video and datas
-  Stream<List<VideoModel>> getVideoStream() {
+  // Get all the video and datas using Stream
+  // Stream<List<VideoModel>> getVideoStream() {
+  //   final CollectionReference videosCollection =
+  //       FirebaseFirestore.instance.collection('video');
+  //   return videosCollection.snapshots().map((snapshot) {
+  //     return snapshot.docs
+  //         .map((doc) => VideoModel.fromJson(doc.data() as Map<String, dynamic>))
+  //         .toList()
+  //         .reversed
+  //         .toList();
+  //   });
+  // }
+
+  // Get all the video and datas using Get Method
+  Future<List<VideoModel>> getAllVideos() async {
     final CollectionReference videosCollection =
         FirebaseFirestore.instance.collection('video');
-    return videosCollection.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => VideoModel.fromJson(doc.data() as Map<String, dynamic>))
-          .toList()
-          .reversed
-          .toList();
-    });
+    try {
+      final alldocs = await videosCollection.get();
+      List<VideoModel> list = [];
+      alldocs.docs.forEach((element) {
+        list.add(VideoModel.fromJson(element.data() as Map<String, dynamic>));
+      });
+      return list;
+    } catch (e) {
+      return [];
+    }
   }
 
   // signOut the Account

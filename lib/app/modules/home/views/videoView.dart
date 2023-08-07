@@ -72,7 +72,7 @@ class _VideoViewListScreenState extends State<VideoViewListScreen> {
               child: TextFormField(
                 controller: _controller.searchController,
                 onChanged: (value) {
-                  // _controller.searchVideos(value);
+                  _controller.filterSearch(value);
                 },
                 decoration: InputDecoration(
                   labelStyle: TextStyle(color: Colors.grey),
@@ -96,187 +96,343 @@ class _VideoViewListScreenState extends State<VideoViewListScreen> {
               ),
             ),
             SizedBox(height: 20.h),
-            StreamBuilder<List<VideoModel>>(
-              // stream:
-              //     FirebaseFirestore.instance.collection('video').snapshots(),
-              stream: _controller.getVideoStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  // final videos = snapshot.data?.docs.reversed.map((doc) {
-                  //   return VideoModel.fromJson(
-                  //       doc.data() as Map<String, dynamic>);
-                  // }).toList();
-                  final videos = snapshot.data;
-                  return Expanded(
-                    child: ListView.builder(
-                      itemCount: videos!.length,
-                      itemBuilder: (context, index) {
-                        VideoModel video = videos[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Get.to(
-                              () => VideoPlayScreen(
-                                videoPlay: videos[index],
-                              ),
-                            );
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Card(
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0)),
-                              child: Container(
-                                height: 90.h,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey),
-                                    borderRadius: BorderRadius.circular(10.0)),
-                                child: Row(
-                                  children: [
-                                    Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 2.w),
-                                      child: Card(
-                                        elevation: 0,
-                                        child: Container(
-                                          height: 80.h,
-                                          width: 90.w,
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.grey),
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0)),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10.0),
-                                            child: Image.network(
-                                              video.videoThumbnail!,
-                                              filterQuality:
-                                                  FilterQuality.medium,
-                                              width: double.maxFinite,
-                                              fit: BoxFit.fill,
-                                            ),
-                                          ),
+            Obx(
+              () => Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _controller.videoList.length,
+                  itemBuilder: (context, index) {
+                    VideoModel video = _controller.videoList[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Get.to(
+                          () => VideoPlayScreen(
+                            videoPlay: _controller.videoList[index],
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(6.0),
+                        child: Card(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0)),
+                          child: Container(
+                            height: 90.h,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(10.0)),
+                            child: Row(
+                              children: [
+                                Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 2.w),
+                                  child: Card(
+                                    elevation: 0,
+                                    child: Container(
+                                      height: 80.h,
+                                      width: 90.w,
+                                      decoration: BoxDecoration(
+                                          border:
+                                              Border.all(color: Colors.grey),
+                                          borderRadius:
+                                              BorderRadius.circular(10.0)),
+                                      child: ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                        child: Image.network(
+                                          video.videoThumbnail!,
+                                          filterQuality: FilterQuality.medium,
+                                          width: double.maxFinite,
+                                          fit: BoxFit.fill,
                                         ),
                                       ),
                                     ),
-                                    Padding(
-                                      padding: EdgeInsets.only(left: 4.w),
-                                      child: Container(
-                                        width: 212.w,
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Padding(
-                                              padding:
-                                                  EdgeInsets.only(top: 10.h),
-                                              child: Text(
-                                                "${video.videoTitle}",
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .labelLarge!
-                                                    .copyWith(
-                                                        fontSize: 15.5.sp),
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  EdgeInsets.only(top: 5.h),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(left: 4.w),
+                                  child: Container(
+                                    width: 212.w,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 10.h),
+                                          child: Text(
+                                            "${video.videoTitle}",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge!
+                                                .copyWith(fontSize: 15.5.sp),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 5.h),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
                                                 children: [
-                                                  Row(
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsets.only(
-                                                                right: 3.w,
-                                                                top: 5.h),
-                                                        child: Icon(
-                                                          Icons
-                                                              .location_on_outlined,
-                                                          size: 13.r,
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding:
-                                                            EdgeInsets.only(
-                                                                top: 5.h),
-                                                        child: Text(
-                                                          "${video.city}",
-                                                          style:
-                                                              Theme.of(context)
-                                                                  .textTheme
-                                                                  .labelSmall,
-                                                        ),
-                                                      ),
-                                                    ],
+                                                  Padding(
+                                                    padding: EdgeInsets.only(
+                                                        right: 3.w, top: 5.h),
+                                                    child: Icon(
+                                                      Icons
+                                                          .location_on_outlined,
+                                                      size: 13.r,
+                                                    ),
                                                   ),
-                                                  Text("|"),
                                                   Padding(
                                                     padding: EdgeInsets.only(
                                                         top: 5.h),
                                                     child: Text(
-                                                      "${video.videoCategory}",
+                                                      "${video.city}",
                                                       style: Theme.of(context)
                                                           .textTheme
-                                                          .labelSmall!
-                                                          .copyWith(
-                                                            color: ColorConstant
-                                                                .indigo,
-                                                          ),
-                                                      maxLines: 2,
-                                                      overflow:
-                                                          TextOverflow.clip,
+                                                          .labelSmall,
                                                     ),
-                                                  )
+                                                  ),
                                                 ],
                                               ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  EdgeInsets.only(top: 5.h),
-                                              child: Container(
-                                                width: 210.w,
-                                                alignment: Alignment.bottomLeft,
+                                              Text("|"),
+                                              Padding(
+                                                padding:
+                                                    EdgeInsets.only(top: 5.h),
                                                 child: Text(
-                                                  '${video.videoDescription}',
+                                                  "${video.videoCategory}",
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .labelSmall!
                                                       .copyWith(
-                                                          color: ColorConstant
-                                                              .indigo,
-                                                          fontSize: 14.sp),
+                                                        color: ColorConstant
+                                                            .indigo,
+                                                      ),
                                                   maxLines: 2,
                                                   overflow: TextOverflow.clip,
                                                 ),
-                                              ),
-                                            ),
-                                          ],
+                                              )
+                                            ],
+                                          ),
                                         ),
-                                      ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 5.h),
+                                          child: Container(
+                                            width: 210.w,
+                                            alignment: Alignment.bottomLeft,
+                                            child: Text(
+                                              '${video.videoDescription}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall!
+                                                  .copyWith(
+                                                      color:
+                                                          ColorConstant.indigo,
+                                                      fontSize: 14.sp),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.clip,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  );
-                } else {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
+            // Using StreamBuilder For Showing List
+            // StreamBuilder<List<VideoModel>>(
+            //   // stream:
+            //   //     FirebaseFirestore.instance.collection('video').snapshots(),
+            //   stream: _controller.getVideoStream(),
+            //   builder: (context, snapshot) {
+            //     if (snapshot.hasData) {
+            //       // final videos = snapshot.data?.docs.reversed.map((doc) {
+            //       //   return VideoModel.fromJson(
+            //       //       doc.data() as Map<String, dynamic>);
+            //       // }).toList();
+            //       final videos = snapshot.data;
+            //       return Expanded(
+            //         child: ListView.builder(
+            //           itemCount: videos!.length,
+            //           itemBuilder: (context, index) {
+            //             VideoModel video = videos[index];
+            //             return GestureDetector(
+            //               onTap: () {
+            //                 Get.to(
+            //                   () => VideoPlayScreen(
+            //                     videoPlay: videos[index],
+            //                   ),
+            //                 );
+            //               },
+            //               child: Padding(
+            //                 padding: EdgeInsets.all(6.0),
+            //                 child: Card(
+            //                   elevation: 3,
+            //                   shape: RoundedRectangleBorder(
+            //                       borderRadius: BorderRadius.circular(10.0)),
+            //                   child: Container(
+            //                     height: 90.h,
+            //                     width: double.infinity,
+            //                     decoration: BoxDecoration(
+            //                         border: Border.all(color: Colors.grey),
+            //                         borderRadius: BorderRadius.circular(10.0)),
+            //                     child: Row(
+            //                       children: [
+            //                         Padding(
+            //                           padding:
+            //                               EdgeInsets.symmetric(horizontal: 2.w),
+            //                           child: Card(
+            //                             elevation: 0,
+            //                             child: Container(
+            //                               height: 80.h,
+            //                               width: 90.w,
+            //                               decoration: BoxDecoration(
+            //                                   border: Border.all(
+            //                                       color: Colors.grey),
+            //                                   borderRadius:
+            //                                       BorderRadius.circular(10.0)),
+            //                               child: ClipRRect(
+            //                                 borderRadius:
+            //                                     BorderRadius.circular(10.0),
+            //                                 child: Image.network(
+            //                                   video.videoThumbnail!,
+            //                                   filterQuality:
+            //                                       FilterQuality.medium,
+            //                                   width: double.maxFinite,
+            //                                   fit: BoxFit.fill,
+            //                                 ),
+            //                               ),
+            //                             ),
+            //                           ),
+            //                         ),
+            //                         Padding(
+            //                           padding: EdgeInsets.only(left: 4.w),
+            //                           child: Container(
+            //                             width: 212.w,
+            //                             child: Column(
+            //                               crossAxisAlignment:
+            //                                   CrossAxisAlignment.start,
+            //                               children: [
+            //                                 Padding(
+            //                                   padding:
+            //                                       EdgeInsets.only(top: 10.h),
+            //                                   child: Text(
+            //                                     "${video.videoTitle}",
+            //                                     style: Theme.of(context)
+            //                                         .textTheme
+            //                                         .labelLarge!
+            //                                         .copyWith(
+            //                                             fontSize: 15.5.sp),
+            //                                   ),
+            //                                 ),
+            //                                 Padding(
+            //                                   padding:
+            //                                       EdgeInsets.only(top: 5.h),
+            //                                   child: Row(
+            //                                     mainAxisAlignment:
+            //                                         MainAxisAlignment
+            //                                             .spaceBetween,
+            //                                     children: [
+            //                                       Row(
+            //                                         children: [
+            //                                           Padding(
+            //                                             padding:
+            //                                                 EdgeInsets.only(
+            //                                                     right: 3.w,
+            //                                                     top: 5.h),
+            //                                             child: Icon(
+            //                                               Icons
+            //                                                   .location_on_outlined,
+            //                                               size: 13.r,
+            //                                             ),
+            //                                           ),
+            //                                           Padding(
+            //                                             padding:
+            //                                                 EdgeInsets.only(
+            //                                                     top: 5.h),
+            //                                             child: Text(
+            //                                               "${video.city}",
+            //                                               style:
+            //                                                   Theme.of(context)
+            //                                                       .textTheme
+            //                                                       .labelSmall,
+            //                                             ),
+            //                                           ),
+            //                                         ],
+            //                                       ),
+            //                                       Text("|"),
+            //                                       Padding(
+            //                                         padding: EdgeInsets.only(
+            //                                             top: 5.h),
+            //                                         child: Text(
+            //                                           "${video.videoCategory}",
+            //                                           style: Theme.of(context)
+            //                                               .textTheme
+            //                                               .labelSmall!
+            //                                               .copyWith(
+            //                                                 color: ColorConstant
+            //                                                     .indigo,
+            //                                               ),
+            //                                           maxLines: 2,
+            //                                           overflow:
+            //                                               TextOverflow.clip,
+            //                                         ),
+            //                                       )
+            //                                     ],
+            //                                   ),
+            //                                 ),
+            //                                 Padding(
+            //                                   padding:
+            //                                       EdgeInsets.only(top: 5.h),
+            //                                   child: Container(
+            //                                     width: 210.w,
+            //                                     alignment: Alignment.bottomLeft,
+            //                                     child: Text(
+            //                                       '${video.videoDescription}',
+            //                                       style: Theme.of(context)
+            //                                           .textTheme
+            //                                           .labelSmall!
+            //                                           .copyWith(
+            //                                               color: ColorConstant
+            //                                                   .indigo,
+            //                                               fontSize: 14.sp),
+            //                                       maxLines: 2,
+            //                                       overflow: TextOverflow.clip,
+            //                                     ),
+            //                                   ),
+            //                                 ),
+            //                               ],
+            //                             ),
+            //                           ),
+            //                         ),
+            //                       ],
+            //                     ),
+            //                   ),
+            //                 ),
+            //               ),
+            //             );
+            //           },
+            //         ),
+            //       );
+            //     } else {
+            //       return Center(
+            //         child: CircularProgressIndicator(),
+            //       );
+            //     }
+            //   },
+            // ),
           ],
         ),
       ),

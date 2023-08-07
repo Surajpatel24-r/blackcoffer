@@ -35,6 +35,7 @@ class HomeScreenController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
+    fetchVideos();
   }
 
   @override
@@ -279,16 +280,47 @@ class HomeScreenController extends GetxController {
   }
 
   //=================== Video Listing ====================================
-  Stream<List<VideoModel>> getVideoStream() {
-    return _firebaseProvider.getVideoStream();
+  // Stream<List<VideoModel>> getVideoStream() {
+  //   return _firebaseProvider.getVideoStream();
+  // }
+
+  //============================ video filtering & Listing================================
+  List<VideoModel> videoListParmanent = [];
+  var videoList = List<VideoModel>.empty(growable: true).obs;
+
+  void fetchVideos() async {
+    setIsLoading(true);
+    videoListParmanent = await _firebaseProvider.getAllVideos();
+    videoList.value = videoListParmanent;
+    setIsLoading(false);
   }
 
-  //============================ video filtering ================================
+  void filterSearch(value) async {
+    videoList.value = [];
+    List<VideoModel> list = videoListParmanent;
+    if (value != "") {
+      videoList.value = list
+          .where(
+            (element) => (element.videoTitle!.toLowerCase().contains(value) ||
+                element.city!.toLowerCase().contains(value) ||
+                element.videoCategory!.toLowerCase().contains(value) ||
+                element.videoTitle!.toUpperCase().contains(value) ||
+                element.city!.toUpperCase().contains(value) ||
+                element.videoCategory!.toUpperCase().contains(value) ||
+                element.videoTitle!.toString().contains(value) ||
+                element.city!.toString().contains(value) ||
+                element.videoCategory!.toString().contains(value)),
+          )
+          .toList();
+    } else {
+      videoList.value = videoListParmanent;
+    }
+  }
 
   void logOut() async {
     var logoutBool = await _firebaseProvider.signOut();
     if (logoutBool == true) {
-      Get.offAll(() => AppRoute.login);
+      Get.offAllNamed(AppRoute.login);
       Get.snackbar("LogOut Success", "Successfully logout");
     } else {
       Get.snackbar("LogOut Failed!", "Failed to log out !");
