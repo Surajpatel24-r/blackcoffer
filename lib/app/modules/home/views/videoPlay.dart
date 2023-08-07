@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:blackcoffer/app/data/models/videoModel.dart';
 import 'package:blackcoffer/app/modules/home/controller.dart';
 import 'package:chewie/chewie.dart';

@@ -21,6 +21,8 @@ class HomeScreenController extends GetxController {
   UserModel? user;
   VideoModel? videosModel;
 
+  final formKey = GlobalKey<FormState>();
+
   TextEditingController cityController = TextEditingController();
   TextEditingController stateController = TextEditingController();
   TextEditingController zipCodeController = TextEditingController();
@@ -105,11 +107,11 @@ class HomeScreenController extends GetxController {
 
   // camera video record
   void selectVideoFromCamera() async {
-    videoCompressLoading.value = true;
     final ImagePicker _picker = ImagePicker();
     final XFile? video = await _picker.pickVideo(
       source: ImageSource.camera,
     );
+    videoCompressLoading.value = true;
     if (video != null) {
       selectedVideo.value = File(video.path);
       selectedVideoFile = File(video.path);
@@ -184,7 +186,7 @@ class HomeScreenController extends GetxController {
     return '';
   }
 
-  void saveProfile() async {
+  void postAllVideosDatas() async {
     print(videoTitleController.text);
     print(videoDescriptionController.text);
     print(videoCategoryController.text);
@@ -228,7 +230,14 @@ class HomeScreenController extends GetxController {
           Get.back();
         },
       );
-      disposeTextEditingController();
+      videoTitleController.clear();
+      videoCategoryController.clear();
+      videoDescriptionController.clear();
+      cityController.clear();
+      stateController.clear();
+      zipCodeController.clear();
+      streetController.clear();
+      // disposeTextEditingController();
     } else {
       setIsLoading(false);
     }
@@ -273,6 +282,8 @@ class HomeScreenController extends GetxController {
   Stream<List<VideoModel>> getVideoStream() {
     return _firebaseProvider.getVideoStream();
   }
+
+  //============================ video filtering ================================
 
   void logOut() async {
     var logoutBool = await _firebaseProvider.signOut();
