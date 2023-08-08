@@ -36,6 +36,7 @@ class HomeScreenController extends GetxController {
   void onInit() async {
     super.onInit();
     fetchVideos();
+    await loadVideoThumbnail();
   }
 
   @override
@@ -81,6 +82,13 @@ class HomeScreenController extends GetxController {
     stateController.dispose();
     zipCodeController.dispose();
     streetController.dispose();
+  }
+
+  Future<void> refreshData() async {
+    // Simulate a delay before refreshing data
+    await Future.delayed(Duration(seconds: 2));
+    await loadVideoThumbnail();
+    update();
   }
 
   // Video Section
@@ -129,6 +137,8 @@ class HomeScreenController extends GetxController {
       print("Video Date: ${videoDate.value}");
       print("Video Thumbnail: $videoThumbnail");
       _compressVideo(video.path);
+      Get.snackbar(
+          "Successfully Selected Video", "Successfully Selected Video");
       videoCompressLoading.value = false;
     } else {
       print("selectedVideo--=-=-=-=-=-=-=_${selectedVideo}");
@@ -194,53 +204,91 @@ class HomeScreenController extends GetxController {
     print(cityController.text);
 
     setIsLoading(true);
+    if (videoTitleController.text.isNotEmpty &&
+        videoDescriptionController.text.isNotEmpty &&
+        videoCategoryController.text.isNotEmpty &&
+        cityController.text.isNotEmpty &&
+        stateController.text.isNotEmpty &&
+        streetController.text.isNotEmpty &&
+        zipCodeController.text.isNotEmpty &&
+        selectedVideoFile != null) {
+      try {
+        user = await _storageProvider.readUserModel();
 
-    user = await _storageProvider.readUserModel();
+        final videoUrl = await _firebaseProvider.uploadVideoToFirebase(
+            user!.uid, selectedVideoFile!);
+        final videoThumbnailUrl =
+            await _firebaseProvider.uploadVideoThumbnailToFirebase(
+                user!.uid, File(uploadVideoThumbnail!));
+        final success = await _firebaseProvider.createVideo(VideoModel(
+          videoTitle: videoTitleController.text.isEmpty
+              ? null
+              : videoTitleController.text.trim(),
+          videoDescription: videoDescriptionController.text.isEmpty
+              ? null
+              : videoDescriptionController.text.trim(),
+          videoCategory: videoCategoryController.text.isEmpty
+              ? null
+              : videoCategoryController.text.trim(),
+          createdBy: user!.uid,
+          city: cityController.text.isEmpty ? null : cityController.text.trim(),
+          street: streetController.text.isEmpty
+              ? null
+              : streetController.text.trim(),
+          state:
+              stateController.text.isEmpty ? null : stateController.text.trim(),
+          zipCode: zipCodeController.text.isEmpty
+              ? null
+              : zipCodeController.text.trim(),
+          videoThumbnail: videoThumbnailUrl,
+          videoUrl: videoUrl,
+        ));
 
-    final videoUrl = await _firebaseProvider.uploadVideoToFirebase(
-        user!.uid, selectedVideoFile!);
-    final videoThumbnailUrl = await _firebaseProvider
-        .uploadVideoThumbnailToFirebase(user!.uid, File(uploadVideoThumbnail!));
-    final success = await _firebaseProvider.createVideo(VideoModel(
-      videoTitle: videoTitleController.text.isEmpty
-          ? null
-          : videoTitleController.text.trim(),
-      videoDescription: videoDescriptionController.text.isEmpty
-          ? null
-          : videoDescriptionController.text.trim(),
-      videoCategory: videoCategoryController.text.isEmpty
-          ? null
-          : videoCategoryController.text.trim(),
-      createdBy: user!.uid,
-      city: cityController.text.isEmpty ? null : cityController.text.trim(),
-      street:
-          streetController.text.isEmpty ? null : streetController.text.trim(),
-      state: stateController.text.isEmpty ? null : stateController.text.trim(),
-      zipCode:
-          zipCodeController.text.isEmpty ? null : zipCodeController.text.trim(),
-      videoThumbnail: videoThumbnailUrl,
-      videoUrl: videoUrl,
-    ));
-
-    if (success) {
-      Get.snackbar('Video Upload Successfully', "Video Upload Successfully");
-      setIsLoading(false);
-      await Future.delayed(
-        Duration(seconds: 1),
-        () {
-          Get.back();
-        },
-      );
-      videoTitleController.clear();
-      videoCategoryController.clear();
-      videoDescriptionController.clear();
-      cityController.clear();
-      stateController.clear();
-      zipCodeController.clear();
-      streetController.clear();
-      // disposeTextEditingController();
+        if (success) {
+          Get.snackbar(
+              'Video Upload Successfully', "Video Upload Successfully");
+          setIsLoading(false);
+          await Future.delayed(
+            Duration(seconds: 1),
+            () {
+              Get.back();
+            },
+          );
+          videoTitleController.clear();
+          videoCategoryController.clear();
+          videoDescriptionController.clear();
+          cityController.clear();
+          stateController.clear();
+          zipCodeController.clear();
+          streetController.clear();
+          selectedVideo.value = null;
+          // disposeTextEditingController();
+        } else {
+          setIsLoading(false);
+        }
+      } catch (e) {
+        Get.snackbar(
+          'Upload Error',
+          'Failed to upload the video. Please try again.',
+          snackPosition: SnackPosition.TOP,
+        );
+        print('Exception during video upload: $e');
+      }
     } else {
-      setIsLoading(false);
+      Get.snackbar(
+        'Upload Error',
+        'video, title, description, or category and location file is missing.',
+        snackPosition: SnackPosition.TOP,
+      );
+      print('Title, description, or video file is missing.');
+    }
+  }
+
+  // selected thumbnail refress
+  File? selectedVideoThumbnail;
+  Future<void> loadVideoThumbnail() async {
+    if (uploadVideoThumbnail != null) {
+      selectedVideoThumbnail = File(uploadVideoThumbnail.toString());
     }
   }
 
